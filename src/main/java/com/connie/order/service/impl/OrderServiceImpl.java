@@ -12,12 +12,11 @@ import com.connie.order.repository.OrderDetailRepository;
 import com.connie.order.repository.OrderMasterRepository;
 import com.connie.order.service.OrderService;
 import com.connie.order.utils.KeyUtil;
-import com.netflix.discovery.converters.Auto;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
@@ -42,6 +41,7 @@ public class OrderServiceImpl implements OrderService {
     private ProductClient productClient;
 
     @Override
+    @Transactional
     public OrderDTO create(OrderDTO orderDTO) {
         String orderId = KeyUtil.genUniqueKey();
         // 2.查询商品信息(调用商品服务)
@@ -49,6 +49,11 @@ public class OrderServiceImpl implements OrderService {
                 .stream().map(OrderDetail::getProductId)
                 .collect(Collectors.toList());
         List<ProductInfo> productInfoList = productClient.listForOrder(productIdList);
+
+        // 读redis
+        // 减库存并将新值重新设置进redis
+
+        // 订单入库异常，手动回滚redis
 
         // 3.计算总价
         BigDecimal orderAmount = new BigDecimal(BigInteger.ONE);
